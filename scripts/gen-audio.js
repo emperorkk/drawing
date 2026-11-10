@@ -19,7 +19,7 @@ async function one([name, text]) {
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.OPENAI_API_KEY },
     body: JSON.stringify({
       model: "gpt-4o-mini-tts",
-      voice: "coral",
+      voice: "cedar",
       input: text,
       instructions: "Μίλα στα ελληνικά, με φυσική ελληνική προφορά. Ζεστή, χαρούμενη φωνή που μιλά σε ένα παιδί 8 χρονών. Αργός, καθαρός ρυθμός.",
       response_format: "mp3"
