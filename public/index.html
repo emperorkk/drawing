@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ζωγραφίζω</title>
+<meta name="description" content="Μαθήματα ζωγραφικής βήμα βήμα, στα ελληνικά.">
+<meta name="theme-color" content="#1f6fd1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Commissioner:wght@400;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: one column "island postcard" — whitewash ground, Aegean-blue ink, lemon reward accent. Home = lesson grid; lesson = big drawing board + instruction + chunky controls. */
+:root{
+  --bg:#f3f7fb; --surface:#ffffff; --ink:#123a63; --muted:#5b7390;
+  --sea:#1f6fd1; --sea-soft:#dbe8f8; --lemon:#f5c53a; --olive:#5f7d3a; --line:#c9d8ea;
+  --done-stroke:#9fb4cc;
+  --f-display:"Comfortaa","Trebuchet MS",sans-serif;
+  --f-body:"Commissioner","Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1a2b; --surface:#13263d; --ink:#e6eef8; --muted:#9db1c9;
+  --sea:#5aa2ff; --sea-soft:#1b3655; --lemon:#f5c53a; --olive:#9dbb6c; --line:#25415f; --done-stroke:#5f7896; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1a2b; --surface:#13263d; --ink:#e6eef8; --muted:#9db1c9;
+  --sea:#5aa2ff; --sea-soft:#1b3655; --lemon:#f5c53a; --olive:#9dbb6c; --line:#25415f; --done-stroke:#5f7896; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-block:max(20px,env(safe-area-inset-top,0px)) max(40px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1,h2{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance}
+h1{font-size:clamp(28px,7vw,40px)}
+h2{font-size:clamp(24px,6vw,32px)}
+p{margin:0}
+.meander{height:12px;background:
+  linear-gradient(var(--sea),var(--sea)) 0 0/100% 2px no-repeat,
+  linear-gradient(var(--sea),var(--sea)) 0 100%/100% 2px no-repeat,
+  repeating-linear-gradient(90deg,var(--sea) 0 2px,transparent 2px 12px);opacity:.5;border-radius:1px}
+.hello{display:flex;flex-direction:column;gap:8px}
+.hello p{color:var(--muted)}
+.stars{font-family:var(--f-display);font-weight:700;color:var(--ink);display:inline-flex;gap:8px;align-items:center;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:6px 14px;align-self:flex-start}
+.stars svg{width:22px;height:22px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{all:unset;cursor:pointer;background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:8px;position:relative;transition:transform .15s,border-color .15s}
+.card:hover,.card:focus-visible{border-color:var(--sea);transform:translateY(-2px)}
+.card:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+.card svg.pic{width:100%;aspect-ratio:1;max-width:100%;background:var(--sea-soft);border-radius:14px}
+.card .name{font-family:var(--f-display);font-weight:700;font-size:20px}
+.card .meta{font-size:14px;color:var(--muted)}
+.card .badge{position:absolute;top:18px;right:18px;width:34px;height:34px}
+.pic path,.pic circle{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pic .fill{fill:var(--ink)}
+/* lesson */
+.topbar{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.btn{all:unset;cursor:pointer;font-family:var(--f-display);font-weight:700;font-size:18px;border-radius:16px;padding:14px 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:28px;text-align:center;-webkit-tap-highlight-color:transparent}
+.btn:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+.btn svg{width:22px;height:22px;flex:none}
+.btn-ghost{background:var(--surface);border:2px solid var(--line);color:var(--ink)}
+.btn-main{background:var(--sea);color:#fff}
+.btn-lemon{background:var(--lemon);color:#3a2c00}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--sea)}
+.dots i.now{background:var(--lemon);outline:2px solid var(--sea)}
+.board{background:var(--surface);border:2px solid var(--line);border-radius:26px;padding:10px}
+.board svg{width:100%;aspect-ratio:1;max-width:100%;display:block;max-height:58vh;margin:0 auto}
+.board path,.board circle{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.board .old path,.board .old circle{stroke:var(--done-stroke);stroke-width:3.5}
+.board .old .fill{fill:var(--done-stroke)}
+.board .old.fin path,.board .old.fin circle{stroke:var(--ink);stroke-width:4}
+.board .old.fin .fill{fill:var(--ink)}
+.board .cur path,.board .cur circle{stroke:var(--sea);stroke-width:5}
+.board .cur .fill{fill:var(--sea)}
+.say{font-size:clamp(20px,5vw,24px);font-weight:600;line-height:1.4;min-height:3em}
+.say .step{display:block;font-family:var(--f-display);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.photo{display:flex;flex-direction:column;gap:14px;background:var(--surface);border:2px dashed var(--sea);border-radius:22px;padding:18px}
+.photo input{position:absolute;width:1px;height:1px;opacity:0}
+.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gallery img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;border:2px solid var(--line);background:var(--sea-soft)}
+.gallery figure{margin:0;position:relative}
+.gallery .del{all:unset;cursor:pointer;position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;background:var(--surface);color:var(--ink);border:2px solid var(--line);display:grid;place-items:center;font-size:20px;line-height:1}
+.confirm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--sea-soft);border-radius:16px;padding:12px}
+.confirm span{flex:1 1 100%;font-weight:600}
+.note{font-size:14px;color:var(--muted)}
+@media (max-width:420px){.controls{grid-template-columns:1fr 1fr}.controls .play{grid-column:1/-1;order:-1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<audio id="voice" preload="auto"></audio>
+<script src="lessons.js"></script>
+<script>
+const app = document.getElementById('app');
+const voice = document.getElementById('voice');
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.2 6.1 20.4l1.3-6.5L2.5 9.3l6.6-.8z" fill="var(--lemon)" stroke="#c99a12" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+const I = {
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  next:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  sound:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
+};
+
+// ---- state ----
+let drawings = [];          // [{id, lesson, at, url}] from IndexedDB
+let storageOk = true;
+let view = {lesson:null, step:0};
+
+function play(name){
+  try{ voice.pause(); voice.src = 'audio/' + name + '.mp3'; voice.currentTime = 0; voice.play().catch(()=>{}); }catch(e){}
+}
+function starsFor(id){ return drawings.filter(d=>d.lesson===id).length; }
+function totalStars(){ return new Set(drawings.map(d=>d.lesson)).size; }
+
+function fullPic(l){ return '<svg class="pic" viewBox="0 0 240 240" aria-hidden="true">' + l.steps.map(s=>s.svg).join('') + '</svg>'; }
+
+// ---- home ----
+function renderHome(){
+  view.lesson = null;
+  app.innerHTML = `
+    <div class="hello">
+      <h1>Ζωγραφίζω!</h1>
+      <p>Διάλεξε μια ζωγραφιά. Θα σου δείχνω βήμα βήμα τι να κάνεις στο χαρτί σου.</p>
+    </div>
+    <div class="meander" aria-hidden="true"></div>
+    <span class="stars">${STAR}<span>${totalStars()} από ${LESSONS.length} αστέρια</span></span>
+    <div class="grid">
+      ${LESSONS.map(l=>`
+        <button class="card" data-id="${l.id}" aria-label="${l.title}">
+          ${fullPic(l)}
+          ${starsFor(l.id) ? `<span class="badge">${STAR}</span>` : ''}
+          <span class="name">${l.title}</span>
+          <span class="meta">${l.steps.length} βήματα${starsFor(l.id) ? ' · ' + starsFor(l.id) + (starsFor(l.id)===1?' ζωγραφιά':' ζωγραφιές') : ''}</span>
+        </button>`).join('')}
+    </div>
+    <p class="note">Πάτα το ηχείο σε κάθε βήμα για να ακούσεις την οδηγία.</p>`;
+  app.querySelectorAll('.card').forEach(b=>b.onclick=()=>{ location.hash = b.dataset.id; });
+}
+
+// ---- lesson ----
+function animateCurrent(svg){
+  const els = svg.querySelectorAll('.cur path, .cur circle');
+  let delay = 0;
+  els.forEach(el=>{
+    if (el.classList.contains('fill')) { el.style.opacity=0; el.style.transition='opacity .3s '+delay+'s'; requestAnimationFrame(()=>requestAnimationFrame(()=>el.style.opacity=1)); return; }
+    let len = 300; try{ len = el.getTotalLength(); }catch(e){}
+    const dur = Math.min(1.6, Math.max(0.5, len/160));
+    el.style.strokeDasharray = len; el.style.strokeDashoffset = len;
+    el.style.transition = `stroke-dashoffset ${dur}s ease-in-out ${delay}s`;
+    delay += dur * 0.85;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.strokeDashoffset = 0; }));
+  });
+}
+
+function renderLesson(){
+  const l = view.lesson, n = view.step, total = l.steps.length;
+  const isIntro = n===0, isDone = n>total;
+  const shown = isDone ? total : n;
+  const old = l.steps.slice(0, isDone ? total : Math.max(0,n-1)).map(s=>s.svg).join('');
+  const cur = (!isIntro && !isDone) ? l.steps[n-1].svg : '';
+  const text = isIntro ? l.intro : isDone ? 'Τα κατάφερες! Τώρα βγάλε μια φωτογραφία τη ζωγραφιά σου, για να τη φυλάξουμε.' : l.steps[n-1].say;
+  const label = isIntro ? 'Ξεκινάμε' : isDone ? 'Τέλος' : `Βήμα ${n} από ${total}`;
+  app.innerHTML = `
+    <div class="topbar">
+      <button class="btn btn-ghost" id="home" aria-label="Αρχική">${I.home}</button>
+      <h2>${l.title}</h2>
+      <div class="dots" aria-hidden="true">${l.steps.map((_,i)=>`<i class="${i+1<n||isDone?'on':i+1===n?'now':''}"></i>`).join('')}</div>
+    </div>
+    <div class="board">
+      <svg viewBox="0 0 240 240" role="img" aria-label="${l.title}, ${label}">
+        <g class="old${isDone?' fin':''}">${old}</g><g class="cur">${cur}</g>
+      </svg>
+    </div>
+    <p class="say" aria-live="polite"><span class="step">${label}</span>${text}</p>
+    <div class="controls">
+      <button class="btn btn-ghost" id="prev" ${n===0?'disabled':''}>${I.back}Πίσω</button>
+      <button class="btn btn-lemon play" id="again">${I.sound}Άκου</button>
+      <button class="btn btn-main" id="next" ${isDone?'disabled':''}>${isIntro?'Πάμε':n===total?'Τέλος':'Επόμενο'}${I.next}</button>
+    </div>
+    ${isDone ? photoBlock(l) : ''}`;
+  const audioName = isIntro ? l.id+'-0' : isDone ? 'ui-done' : l.id+'-'+n;
+  document.getElementById('home').onclick = ()=>{ location.hash=''; };
+  document.getElementById('prev').onclick = ()=>go(n-1);
+  document.getElementById('next').onclick = ()=>go(n+1);
+  document.getElementById('again').onclick = ()=>{ play(audioName); if(!isIntro && !isDone) renderLessonAnimOnly(); };
+  if (cur) animateCurrent(app.querySelector('.board svg'));
+  if (isDone) wirePhoto(l);
+  return audioName;
+}
+function renderLessonAnimOnly(){
+  const g = app.querySelector('.board .cur'); if(!g) return;
+  const html = g.innerHTML; g.innerHTML=''; requestAnimationFrame(()=>{ g.innerHTML=html; animateCurrent(app.querySelector('.board svg')); });
+}
+function go(n){ view.step = Math.max(0, Math.min(view.lesson.steps.length+1, n)); const a = renderLesson(); play(a); window.scrollTo({top:0,behavior:'smooth'}); }
+
+// ---- photo upload ----
+function photoBlock(l){
+  const mine = drawings.filter(d=>d.lesson===l.id).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+  return `
+    <div class="photo">
+      <label class="btn btn-main" for="pick">${I.cam}Φωτογράφισε τη ζωγραφιά μου</label>
+      <input id="pick" type="file" accept="image/*" capture="environment">
+      <p class="note" id="status">${storageOk ? 'Οι φωτογραφίες φυλάγονται μόνο σε αυτό το κινητό.' : 'Αυτός ο browser δεν φυλάει φωτογραφίες. Θα φαίνεται μέχρι να κλείσεις τη σελίδα.'}</p>
+      ${mine.length ? `<div class="gallery">${mine.map(d=>`<figure><img src="${d.url}" alt="Η ζωγραφιά μου: ${l.title}"><button class="del" data-id="${d.id}" aria-label="Σβήσε αυτή τη φωτογραφία">×</button></figure>`).join('')}</div>` : ''}
+      <div class="confirm" id="confirm" hidden><span>Να σβήσω αυτή τη φωτογραφία;</span><button class="btn btn-ghost" id="no">Όχι</button><button class="btn btn-main" id="yes">Ναι, σβήσε</button></div>
+    </div>`;
+}
+async function shrink(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; });
+    const max = 1600, k = Math.min(1, max/Math.max(img.width,img.height));
+    const c = document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    return await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.85));
+  } finally { URL.revokeObjectURL(url); }
+}
+function wirePhoto(l){
+  const pick = document.getElementById('pick'), status = document.getElementById('status');
+  pick.onchange = async ()=>{
+    const f = pick.files && pick.files[0]; if(!f) return;
+    status.textContent = 'Φυλάγεται η φωτογραφία…';
+    let blob; try{ blob = await shrink(f); }catch(e){ blob = f; }
+    const rec = {lesson:l.id, at:new Date().toISOString(), blob};
+    try{ await store.add(rec); await loadDrawings(); }
+    catch(e){ drawings.push({id:'tmp'+Date.now(), lesson:l.id, at:rec.at, url:URL.createObjectURL(blob)}); }
+    play('ui-saved'); go(view.step);
+  };
+  const confirm = document.getElementById('confirm'); let target = null;
+  app.querySelectorAll('.del').forEach(b=>b.onclick=()=>{ target = b.dataset.id; confirm.hidden = false; confirm.scrollIntoView({block:'nearest',behavior:'smooth'}); });
+  document.getElementById('no').onclick = ()=>{ confirm.hidden = true; target = null; };
+  document.getElementById('yes').onclick = async ()=>{
+    if (target==null) return;
+    const id = Number(target);
+    try{ if (!isNaN(id)) await store.del(id); }catch(e){}
+    if (isNaN(id)) drawings = drawings.filter(d=>String(d.id)!==target); else await loadDrawings();
+    renderLesson();
+  };
+}
+
+// ---- routing ----
+function route(){
+  const id = location.hash.slice(1);
+  const l = LESSONS.find(x=>x.id===id);
+  if (l){ if(view.lesson!==l){ view.lesson=l; view.step=0; } renderLesson(); }
+  else renderHome();
+}
+window.addEventListener('hashchange', ()=>{ route(); const id=location.hash.slice(1); if(LESSONS.find(x=>x.id===id)) play(id+'-0'); else play('ui-welcome'); });
+
+// ---- storage (IndexedDB, on this device only) ----
+const store = (()=>{
+  let dbp = null;
+  function open(){
+    if (!dbp) dbp = new Promise((ok,no)=>{
+      const r = indexedDB.open('zografizo', 1);
+      r.onupgradeneeded = ()=> r.result.createObjectStore('drawings', {keyPath:'id', autoIncrement:true});
+      r.onsuccess = ()=> ok(r.result); r.onerror = ()=> no(r.error);
+    });
+    return dbp;
+  }
+  async function tx(mode, fn){
+    const db = await open();
+    return new Promise((ok,no)=>{ const t = db.transaction('drawings', mode); const res = fn(t.objectStore('drawings')); t.oncomplete=()=>ok(res && res.result); t.onerror=()=>no(t.error); });
+  }
+  return {
+    all: ()=> tx('readonly', s=>s.getAll()),
+    add: (rec)=> tx('readwrite', s=>s.add(rec)),
+    del: (id)=> tx('readwrite', s=>s.delete(id))
+  };
+})();
+async function loadDrawings(){
+  try{
+    const rows = await store.all() || [];
+    drawings.forEach(d=>d.url && URL.revokeObjectURL(d.url));
+    drawings = rows.map(r=>({id:r.id, lesson:r.lesson, at:r.at, url:URL.createObjectURL(r.blob)}));
+    storageOk = true;
+  }catch(e){ storageOk = false; }
+}
+loadDrawings().then(()=>{ route(); });
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+if ('serviceWorker' in navigator) window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
