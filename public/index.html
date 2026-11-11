@@ -114,8 +114,28 @@ let drawings = [];          // [{id, lesson, at, url}] from IndexedDB
 let storageOk = true;
 let view = {lesson:null, step:0};
 
+// Text for every clip, so the phone's own Greek voice can read it if the mp3 is missing.
+function clipText(name){
+  if (name.startsWith('ui-')) return UI_AUDIO[name.slice(3)];
+  const i = name.lastIndexOf('-'), l = LESSONS.find(x=>x.id===name.slice(0,i)), n = +name.slice(i+1);
+  if (!l) return '';
+  return n===0 ? l.intro : (l.steps[n-1]||{}).say || '';
+}
+function speakFallback(name){
+  try{
+    const text = clipText(name); if (!text || !window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'el-GR'; u.rate = 0.9;
+    const v = speechSynthesis.getVoices().find(v=>/^el/i.test(v.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+let current = '';
+voice.addEventListener('error', ()=>{ if (current) speakFallback(current); });
 function play(name){
-  try{ voice.pause(); voice.src = 'audio/' + name + '.mp3'; voice.currentTime = 0; voice.play().catch(()=>{}); }catch(e){}
+  current = name;
+  try{ if (window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  try{ voice.pause(); voice.src = 'audio/' + name + '.mp3'; voice.currentTime = 0; voice.play().catch(()=>{}); }catch(e){ speakFallback(name); }
 }
 function starsFor(id){ return drawings.filter(d=>d.lesson===id).length; }
 function totalStars(){ return new Set(drawings.map(d=>d.lesson)).size; }
