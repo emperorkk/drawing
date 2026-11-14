@@ -1,0 +1,19 @@
+// Cloudflare Worker config for drawapp.party (deployed by Workers Builds from this repo).
+// Static files: ./public. The script in worker/index.js only handles /api/*.
+// Secrets are set in the dashboard (Worker → Settings → Variables and Secrets), never here:
+//   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, METRICS_KEY
+{
+  "name": "drawing",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "kv_namespaces": [
+    { "binding": "METRICS", "id": "0a94fac60be74891accecadb4bad9ef3" }
+  ],
+  "keep_vars": true,
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="el" data-page="metrics">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Μετρήσεις | Ζωγραφίζω</title>
+<meta name="description" content="Ανώνυμα συνολικά νούμερα χρήσης.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1f6fd1">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="el_GR">
+<meta property="og:site_name" content="Ζωγραφίζω">
+<meta property="og:title" content="Μετρήσεις | Ζωγραφίζω">
+<meta property="og:description" content="Ανώνυμα συνολικά νούμερα χρήσης.">
+<meta property="og:url" content="https://drawapp.party/metrikes/">
+<meta property="og:image" content="https://drawapp.party/og/default.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Μετρήσεις | Ζωγραφίζω">
+<meta name="twitter:description" content="Ανώνυμα συνολικά νούμερα χρήσης.">
+<meta name="twitter:image" content="https://drawapp.party/og/default.png">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Commissioner:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="/pages.css">
+
+<script src="/track.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+<nav class="crumbs" aria-label="Πλοήγηση"><a href="/">Ζωγραφίζω</a> › <span>Μετρήσεις</span></nav>
+<h1>Μετρήσεις</h1>
+<p>Ανώνυμα συνολικά νούμερα. Η λίστα με όλα όσα καταγράφονται είναι στη σελίδα <a href="/aporrito/">Απόρρητο</a>.</p>
+<form class="box" id="login">
+  <label for="key"><strong>Κωδικός μετρήσεων</strong></label>
+  <input id="key" type="password" autocomplete="current-password" required style="font:inherit;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink)">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <label for="days">Περίοδος</label>
+    <select id="days" style="font:inherit;padding:8px;border-radius:10px"><option value="7">7 ημέρες</option><option value="30" selected>30 ημέρες</option><option value="90">90 ημέρες</option><option value="400">Όλα</option></select>
+    <button class="btn" type="submit">Δείξε τα νούμερα</button>
+  </div>
+  <p class="meta" id="status"></p>
+</form>
+<div id="out"></div>
+<script>
+(function(){
+  var LESSONS = {"xtapodi":"Χταπόδι","kaiki":"Καΐκι","koukouvagia":"Κουκουβάγια","anemomylos":"Ανεμόμυλος","panta":"Πάντα","kolokytha":"Τρομακτική κολοκύθα","delfini":"Δελφίνι","xelona":"Χελώνα καρέτα","faros":"Φάρος","dourios-ippos":"Δούρειος Ίππος","kastanas":"Ο καστανάς","liomazoma":"Λιομάζωμα","amforeas":"Αρχαίος αμφορέας","gata":"Γάτα στο τοιχάκι"};
+  var PAGES = {home:"Αρχική",lesson:"Σελίδα μαθήματος",catalog:"Κατάλογος",terms:"Όροι",privacy:"Απόρρητο",metrics:"Μετρήσεις",other:"Άλλη"};
+  var form = document.getElementById("login"), keyEl = document.getElementById("key"), daysEl = document.getElementById("days");
+  var status = document.getElementById("status"), out = document.getElementById("out");
+  try { keyEl.value = sessionStorage.getItem("metricsKey") || ""; } catch(e){}
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function sum(rows, k, v){ return rows.filter(function(r){ return r.k===k && (v===undefined || r.v===v); }).reduce(function(a,r){ return a+r.c; },0); }
+  function group(rows, k){ var m={}; rows.forEach(function(r){ if(r.k===k) m[r.v]=(m[r.v]||0)+r.c; }); return Object.keys(m).map(function(v){ return [v,m[v]]; }).sort(function(a,b){ return b[1]-a[1]; }); }
+  function table(head, rows){ return '<div class="table-wrap"><table><thead><tr>'+head.map(function(h,i){ return '<th'+(i?' class="num"':'')+'>'+h+'</th>'; }).join("")+'</tr></thead><tbody>'+(rows.length?rows.map(function(r){ return '<tr>'+r.map(function(c,i){ return '<td'+(i?' class="num"':'')+'>'+esc(c)+'</td>'; }).join("")+'</tr>'; }).join(""):'<tr><td colspan="'+head.length+'">Τίποτα ακόμα</td></tr>')+'</tbody></table></div>'; }
+  function render(d){
+    var r = d.rows, views = sum(r,"page_view"), starts = sum(r,"lesson_start"), done = sum(r,"lesson_complete");
+    var html = '<section class="box"><h2>Σύνοψη: από '+esc(d.since)+'</h2>'+table(["Μέτρηση","Πλήθος"],[
+      ["Επισκέψεις σελίδων",views],["Μαθήματα που ξεκίνησαν",starts],["Μαθήματα που ολοκληρώθηκαν",done],
+      ["Ποσοστό ολοκλήρωσης",starts?Math.round(100*done/starts)+"%":"–"],["Φωτογραφίες που φυλάχτηκαν",sum(r,"photo_saved")],
+      ["Αιτήματα ζωγραφιάς",sum(r,"request_sent")],["Ανοίγματα από εγκατεστημένη εφαρμογή",sum(r,"installed","1")]])+'</section>';
+    var days = {}; r.forEach(function(x){ if(x.k==="page_view"){ days[x.d]=(days[x.d]||0)+x.c; } });
+    html += '<section class="box"><h2>Ανά μάθημα</h2>'+table(["Μάθημα","Άνοιξαν","Τέλος","%","Φωτο"],
+      Object.keys(LESSONS).map(function(id){ var s=sum(r,"lesson_start",id), c=sum(r,"lesson_complete",id); return [LESSONS[id],s,c,s?Math.round(100*c/s)+"%":"–",sum(r,"photo_saved",id)]; })
+      .sort(function(a,b){ return b[1]-a[1]; }))+'</section>';
+    html += '<section class="box"><h2>Επισκέψεις ανά ημέρα</h2>'+table(["Ημέρα","Επισκέψεις"],Object.keys(days).sort().reverse().map(function(k){ return [k,days[k]]; }))+'</section>';
+    html += '<section class="box"><h2>Σελίδες</h2>'+table(["Σελίδα","Επισκέψεις"],group(r,"page_view").map(function(x){ return [PAGES[x[0]]||x[0],x[1]]; }))+'</section>';
+    html += '<section class="box"><h2>Από πού ήρθαν</h2>'+table(["Ιστότοπος","Επισκέψεις"],group(r,"ref"))+'<p class="meta">Μόνο επισκέψεις που ήρθαν από άλλον ιστότοπο. Οι υπόλοιπες άνοιξαν απευθείας.</p></section>';
+    html += '<section class="box"><h2>Συσκευές</h2>'+table(["Συσκευή","Επισκέψεις"],group(r,"device").map(function(x){ return [{mobile:"Κινητό",tablet:"Tablet",desktop:"Υπολογιστής"}[x[0]]||x[0],x[1]]; }))+'</section>';
+    html += '<section class="box"><h2>Χώρες</h2>'+table(["Χώρα","Επισκέψεις"],group(r,"country"))+'</section>';
+    out.innerHTML = html;
+  }
+  form.addEventListener("submit", function(ev){
+    ev.preventDefault(); status.textContent = "Φορτώνει…";
+    fetch("/api/stats?days="+daysEl.value, {headers:{Authorization:"Bearer "+keyEl.value}}).then(function(res){
+      if (res.status===401) throw new Error("Λάθος κωδικός.");
+      if (res.status===503) throw new Error("Οι μετρήσεις δεν έχουν ρυθμιστεί ακόμα στο Cloudflare (λείπει το METRICS ή το METRICS_KEY).");
+      if (!res.ok) throw new Error("Κάτι πήγε στραβά ("+res.status+"). Δοκίμασε ξανά.");
+      return res.json();
+    }).then(function(d){ try{ sessionStorage.setItem("metricsKey", keyEl.value); }catch(e){} status.textContent = ""; render(d); })
+      .catch(function(e){ status.textContent = e.message; });
+  });
+})();
+</script>
+
+<footer class="site">
+  <a href="/">Αρχική</a>
+  <a href="/zografies/">Όλες οι ζωγραφιές</a>
+  <a href="/#zita">Ζήτα μια ζωγραφιά</a>
+  <a href="/oroi/">Όροι χρήσης</a>
+  <a href="/aporrito/">Απόρρητο</a>
+</footer>
+</main>
+</body>
+</html>
