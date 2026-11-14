@@ -6,9 +6,7 @@
 // every voice clip exists; the lesson page and preview image were built; sw.js lists the clips.
 const fs = require("fs"), path = require("path");
 const PUB = path.join(__dirname, "..", "public");
-const { LESSONS, UI_AUDIO } = require(path.join(PUB, "lessons.js"));
-const sw = fs.readFileSync(path.join(PUB, "sw.js"), "utf8");
-const problems = [];
+let problems = [];
 const bad = (where, msg) => problems.push(`${where}: ${msg}`);
 const ALLOWED = new Set(["path", "circle", "text"]);
 
@@ -52,11 +50,10 @@ function checkSvg(where, svg) {
   }
 }
 
-const ids = new Set();
-for (const l of LESSONS) {
+// Content checks for one lesson (no files needed). Used by new-lesson.js on drafts.
+function checkLessonContent(l) {
   const w = l.id || "(no id)";
   if (!/^[a-z0-9-]+$/.test(l.id || "")) bad(w, "id must be lowercase latin letters, digits and dashes");
-  if (ids.has(l.id)) bad(w, "duplicate id"); ids.add(l.id);
   for (const k of ["title", "how", "intro"]) if (!l[k] || typeof l[k] !== "string") bad(w, `missing ${k}`);
   if (!Array.isArray(l.steps) || l.steps.length < 3 || l.steps.length > 12) bad(w, "needs 3–12 steps");
   (l.steps || []).forEach((s, i) => {
@@ -65,6 +62,18 @@ for (const l of LESSONS) {
     if (s.say && s.say.length > 220) bad(sw_, "instruction longer than 220 characters (hard to follow when read aloud)");
     if (!s.svg) bad(sw_, "no drawing"); else checkSvg(sw_, s.svg);
   });
+}
+function checkDraft(lesson) { problems = []; checkLessonContent(lesson); return problems.slice(); }
+module.exports = { checkDraft };
+
+if (require.main === module) {
+const { LESSONS, UI_AUDIO } = require(path.join(PUB, "lessons.js"));
+const sw = fs.readFileSync(path.join(PUB, "sw.js"), "utf8");
+const ids = new Set();
+for (const l of LESSONS) {
+  const w = l.id || "(no id)";
+  if (ids.has(l.id)) bad(w, "duplicate id"); ids.add(l.id);
+  checkLessonContent(l);
   for (let n = 0; n <= (l.steps || []).length; n++) {
     const clip = `audio/${l.id}-${n}.mp3`;
     if (!fs.existsSync(path.join(PUB, clip))) bad(w, `missing voice clip ${clip}`);
@@ -74,6 +83,6 @@ for (const l of LESSONS) {
   if (!fs.existsSync(path.join(PUB, "og", l.id + ".png"))) bad(w, "preview image missing (run node scripts/build-site.js --og)");
 }
 for (const k of Object.keys(UI_AUDIO)) if (!fs.existsSync(path.join(PUB, `audio/ui-${k}.mp3`))) bad("ui", `missing voice clip audio/ui-${k}.mp3`);
-
 if (problems.length) { console.error(problems.join("\n")); console.error(`\n${problems.length} problem(s)`); process.exit(1); }
 console.log(`ok: ${LESSONS.length} lessons, ${LESSONS.reduce((a, l) => a + l.steps.length, 0)} steps, all clips, pages and images present`);
+}

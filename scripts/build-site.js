@@ -13,7 +13,9 @@ const PUB = path.join(ROOT, "public");
 const site = require(path.join(ROOT, "site.config.js"));
 const { LESSONS } = require(path.join(PUB, "lessons.js"));
 const URL_ = site.url.replace(/\/$/, "");
-const today = new Date().toISOString().slice(0, 10);
+// Date shown on terms/privacy and in the sitemap. Kept in site.config.js so rebuilding
+// gives identical files (CI checks that the generated pages are up to date).
+const today = site.updated;
 
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const ld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`;

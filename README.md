@@ -25,6 +25,7 @@ worker/index.js         /api/request (Telegram), /api/event and /api/stats (metr
 wrangler.jsonc          Worker config: assets, KV binding
 site.config.js          site address, name and description
 scripts/
+  new-lesson.js         lesson pipeline: check/render a draft, publish (voice, build, validate)
   build-site.js         generates the pages, sitemap and preview images
   validate-lessons.js   checks lessons, clips, pages and images before publishing
   gen-audio.js          generates missing mp3s (Zyphra by default, or OpenAI)
@@ -32,6 +33,8 @@ scripts/
   check-audio.py        flags clips with dropped words, silent gaps or murmured pauses
   update-sw.js          refreshes the offline file list
 docs/seo-audit.md       SEO audit and what was done
+docs/previews/          step sheet of every lesson (new lines in blue)
+.github/workflows/check.yml   checks every push: lessons, pages up to date, voice clips, Worker config
 ```
 
 ## Deploy
@@ -52,26 +55,15 @@ Local run: put the same three in `.dev.vars` (git-ignored) and run `npx wrangler
 
 ## Adding a lesson
 
-1. Add an entry to `public/lessons.js` (`id`, `title`, `intro`, `steps[]` with `say` + `svg`, drawn in a 240×240 box).
-2. Generate the new voice clips (existing files are skipped). The default is Zyphra
-   (model `zyphra/ZONOS3-Mini`, voice `MyFairyVoice`); OpenAI (`cedar`) still works:
-   ```bash
-   ZYPHRA_API_KEY=... node scripts/gen-audio.js public
-   OPENAI_API_KEY=... node scripts/gen-audio.js public --provider openai
-   ```
-   `--force` regenerates existing clips; `--only panta,ui-done` limits it to some clips.
-   Zyphra allows 100 requests a day and sometimes leaves long pauses or returns a silent
-   clip, so shorten pauses afterwards (needs ffmpeg) and re-run any clip reported EMPTY:
-   ```bash
-   mkdir -p /tmp/raw && cp public/audio/panta-*.mp3 /tmp/raw/
-   python3 scripts/trim-silence.py public/audio /tmp/raw/*.mp3
-   python3 scripts/check-audio.py public      # flags dropped words, gaps, murmured pauses
-   ```
-3. Build the pages and preview images, refresh the offline file list, and check everything:
-   ```bash
-   node scripts/build-site.js --og
-   node scripts/update-sw.js
-   node scripts/validate-lessons.js
-   ```
-   Run this after *any* change in `public/`, then commit and push. Phones reload
-   themselves into the new version the next time the app is opened.
+Ask for it in the Claude chat; `CLAUDE.md` has the workflow. By hand:
+
+```bash
+node scripts/new-lesson.js check drafts/<id>.json     # validate + step sheet drafts/<id>.png
+ZYPHRA_API_KEY=... node scripts/new-lesson.js publish drafts/<id>.json
+git add -A && git commit -m "Add <id> lesson" && git push
+```
+
+`publish` adds the lesson to `lessons.js`, generates and checks the voice clips (regenerating
+failures), builds pages and preview images, refreshes the offline cache and validates.
+Single steps are still available: `gen-audio.js`, `trim-silence.py`, `check-audio.py`,
+`build-site.js --og`, `update-sw.js`, `validate-lessons.js`.

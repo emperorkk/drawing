@@ -1,0 +1,71 @@
+# Checks every push and pull request. GitHub emails you if a check fails.
+# Cloudflare deploys main by itself; to also block a broken deploy, set the Worker's
+# build command to:  node scripts/validate-lessons.js
+name: Check lessons
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install ffmpeg and Playwright
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+
+      - name: Lessons, voice clips, pages and images are complete
+        run: node scripts/validate-lessons.js
+
+      - name: Generated pages are up to date
+        run: |
+          node scripts/build-site.js
+          if ! git diff --quiet -- public; then
+            echo "::error::Generated pages are out of date. Run: node scripts/build-site.js --og && node scripts/update-sw.js, then commit."
+            git diff --stat -- public
+            exit 1
+          fi
+
+      - name: Voice clips have no dropped words or long pauses
+        run: python3 scripts/check-audio.py public
+
+      - name: Worker config is valid
+        run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/worker-dry-run
+
+      - name: Step sheets
+        if: always()
+        run: node scripts/new-lesson.js sheets step-sheets
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: step-sheets
+          path: step-sheets/
+          retention-days: 14
+
+      - name: Summary
+        if: always()
+        run: |
+          node -e '
+            const { LESSONS } = require("./public/lessons.js");
+            const repo = process.env.GITHUB_REPOSITORY, sha = process.env.GITHUB_SHA;
+            let md = `## ${LESSONS.length} lessons\n\n| Lesson | Steps | Page | Step sheet |\n|---|---|---|---|\n`;
+            for (const l of LESSONS) md += `| ${l.title} | ${l.steps.length} | [drawapp.party/zografies/${l.id}/](https://drawapp.party/zografies/${l.id}/) | [preview](https://github.com/${repo}/blob/${sha}/docs/previews/${l.id}.png) |\n`;
+            md += `\nAll step sheets are attached to this run as the **step-sheets** artifact.\n`;
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          '
