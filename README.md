@@ -20,6 +20,7 @@ public/                 everything that is served (static files)
   og/                   1200×630 link-preview images (generated)
   sitemap.xml robots.txt (generated)
   track.js              anonymous usage counts (see /aporrito/)
+  qr.js                 small QR code encoder for the QR button (no dependencies)
   sw.js                 offline cache (generated)
 worker/index.js         /api/request (Telegram), /api/event and /api/stats (metrics)
 wrangler.jsonc          Worker config: assets, KV binding

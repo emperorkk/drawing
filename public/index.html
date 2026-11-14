@@ -115,6 +115,24 @@ p{margin:0}
 .ask textarea:focus-visible,.ask input:focus-visible{outline:3px solid var(--lemon);outline-offset:1px}
 .ask .btn{align-self:flex-start}
 .ask .note a,.note a{color:var(--sea)}
+.hello-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tools{display:flex;gap:8px}
+.icon-btn{all:unset;cursor:pointer;width:46px;height:46px;border-radius:50%;background:var(--surface);border:2px solid var(--line);color:var(--ink);display:grid;place-items:center;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.icon-btn svg{width:22px;height:22px}
+.icon-btn:hover{border-color:var(--sea)}
+.icon-btn:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+dialog#sheet{border:2px solid var(--line);border-radius:24px;background:var(--surface);color:var(--ink);padding:22px;width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto}
+dialog#sheet::backdrop{background:rgba(8,20,35,.55)}
+dialog#sheet h2{font-size:22px;margin:0 40px 8px 0}
+dialog#sheet p{margin:0 0 12px}
+#sheet-body{display:flex;flex-direction:column;gap:4px}
+.sheet-x{position:absolute;top:12px;right:12px;width:38px;height:38px;font-size:24px;line-height:1}
+.qr{background:#fff;border-radius:16px;padding:8px;width:min(260px,100%);margin:6px auto;border:2px solid var(--line)}
+.qr svg{display:block;width:100%;height:auto}
+.url{text-align:center;font-family:var(--f-display);font-weight:700;font-size:18px}
+#sheet .btn{align-self:center}
+ol.how{margin:0 0 12px;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+#toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:600;z-index:20;max-width:calc(100vw - 32px);text-align:center}
 .search{position:relative}
 .search input{font:inherit;font-size:18px;width:100%;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:12px 18px 12px 48px;-webkit-appearance:none;appearance:none}
 .search input::placeholder{color:var(--muted)}
@@ -142,6 +160,11 @@ footer.site a{color:var(--muted)}
   </nav>
 </footer>
 <audio id="voice" preload="auto"></audio>
+<dialog id="sheet" aria-labelledby="sheet-title">
+  <button class="icon-btn sheet-x" id="sheet-close" type="button" aria-label="Κλείσιμο">×</button>
+  <div id="sheet-body"></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite" hidden></div>
 <script src="lessons.js"></script>
 <script src="track.js" defer></script>
 <script>
@@ -154,6 +177,9 @@ const I = {
   sound:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
   find:'<svg viewBox="0 0 24 24" aria-hidden="true" class="find-icon"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
+  share:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4" stroke="currentColor" stroke-width="2.2"/></svg>',
+  qr:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 5.5h2v2h-2zM16.5 5.5h2v2h-2zM5.5 16.5h2v2h-2zM14 14h3v3h-3zM18 18h3v3h-3zM18 14h3v2h-3zM14 18h2v3h-2z" fill="currentColor"/></svg>',
+  install:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v7.5M8.8 11.5l3.2 3.2 3.2-3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
 };
 
@@ -195,7 +221,14 @@ function renderHome(){
   view.lesson = null;
   app.innerHTML = `
     <div class="hello">
-      <h1>Ζωγραφίζω!</h1>
+      <div class="hello-row">
+        <h1>Ζωγραφίζω!</h1>
+        <div class="tools">
+          <button class="icon-btn" id="t-share" type="button" aria-label="Μοιράσου την εφαρμογή" title="Μοιράσου">${I.share}</button>
+          <button class="icon-btn" id="t-qr" type="button" aria-label="Δείξε QR code για την εφαρμογή" title="QR code">${I.qr}</button>
+          <button class="icon-btn" id="t-install" type="button" aria-label="Βάλε την εφαρμογή στην αρχική οθόνη" title="Εγκατάσταση"${isStandalone() ? ' hidden' : ''}>${I.install}</button>
+        </div>
+      </div>
       <p>Διάλεξε μια ζωγραφιά. Θα σου δείχνω βήμα βήμα τι να κάνεις στο χαρτί σου.</p>
     </div>
     <div class="meander" aria-hidden="true"></div>
@@ -233,6 +266,82 @@ function renderHome(){
   app.querySelectorAll('.card').forEach(b=>b.onclick=()=>{ location.hash = b.dataset.id; });
   wireAsk();
   wireSearch();
+  document.getElementById('t-share').onclick = shareApp;
+  document.getElementById('t-qr').onclick = showQR;
+  document.getElementById('t-install').onclick = installApp;
+}
+
+// ---- share / QR / install ----
+const APP_URL = location.origin + '/';
+const sheet = document.getElementById('sheet'), sheetBody = document.getElementById('sheet-body');
+function openSheet(html){
+  sheetBody.innerHTML = html;
+  if (sheet.showModal) sheet.showModal(); else sheet.setAttribute('open', '');
+}
+function closeSheet(){ if (sheet.close) sheet.close(); else sheet.removeAttribute('open'); }
+document.getElementById('sheet-close').onclick = closeSheet;
+sheet.addEventListener('click', ev => { if (ev.target === sheet) closeSheet(); });
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 2600);
+}
+async function copyLink(){
+  try{ await navigator.clipboard.writeText(APP_URL); toast('Ο σύνδεσμος αντιγράφηκε'); return true; }
+  catch(e){ return false; }
+}
+async function shareApp(){
+  const data = { title: 'Ζωγραφίζω', text: 'Μαθήματα ζωγραφικής για παιδιά, βήμα βήμα, στα ελληνικά', url: APP_URL };
+  if (navigator.share){
+    try{ await navigator.share(data); return; }
+    catch(e){ if (e && e.name === 'AbortError') return; }
+  }
+  if (!(await copyLink())) showQR();
+}
+function loadQR(){
+  if (window.QR) return Promise.resolve(window.QR);
+  return new Promise((ok, no)=>{ const sc = document.createElement('script'); sc.src = 'qr.js'; sc.onload = ()=>ok(window.QR); sc.onerror = no; document.head.appendChild(sc); });
+}
+async function showQR(){
+  let code = '';
+  try{ code = (await loadQR()).svg(APP_URL); }
+  catch(e){ code = '<p class="note">Δεν φορτώθηκε το QR code. Δοκίμασε ξανά όταν έχεις internet.</p>'; }
+  openSheet(`
+    <h2 id="sheet-title">Σκάναρε με την κάμερα</h2>
+    <p>Άνοιξε την κάμερα σε ένα άλλο κινητό ή tablet και στόχευσε εδώ, για να ανοίξει το Ζωγραφίζω.</p>
+    <div class="qr">${code}</div>
+    <p class="url">${APP_URL.replace(/^https?:\/\//,'').replace(/\/$/,'')}</p>
+    <button class="btn btn-ghost" type="button" id="qr-copy">Αντιγραφή συνδέσμου</button>`);
+  document.getElementById('qr-copy').onclick = async ()=>{ if (!(await copyLink())) toast('Δεν έγινε αντιγραφή. Γράψε τη διεύθυνση από πάνω.'); };
+}
+function isStandalone(){
+  try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; }
+}
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; });
+window.addEventListener('appinstalled', ()=>{
+  installPrompt = null; toast('Το Ζωγραφίζω μπήκε στην αρχική οθόνη!');
+  const b = document.getElementById('t-install'); if (b) b.hidden = true;
+});
+async function installApp(){
+  if (installPrompt){
+    const p = installPrompt; installPrompt = null;
+    try{ await p.prompt(); const r = await p.userChoice; if (r && r.outcome === 'accepted') return; }catch(e){}
+    return;
+  }
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  openSheet(`
+    <h2 id="sheet-title">Βάλε το Ζωγραφίζω στην αρχική οθόνη</h2>
+    <p>Έτσι ανοίγει σαν κανονική εφαρμογή και δουλεύει και χωρίς internet.</p>
+    ${ios ? `<ol class="how">
+      <li>Άνοιξε τη σελίδα στο <b>Safari</b>.</li>
+      <li>Πάτα το κουμπί <b>Κοινοποίηση</b> (το τετράγωνο με το βελάκι).</li>
+      <li>Διάλεξε <b>«Προσθήκη στην οθόνη Αφετηρίας»</b>.</li></ol>`
+    : `<ol class="how">
+      <li>Άνοιξε τη σελίδα στο <b>Chrome</b>.</li>
+      <li>Πάτα το μενού <b>⋮</b> πάνω δεξιά.</li>
+      <li>Διάλεξε <b>«Εγκατάσταση εφαρμογής»</b> ή <b>«Προσθήκη στην αρχική οθόνη»</b>.</li></ol>
+      <p class="note">Αν η εφαρμογή είναι ήδη εγκατεστημένη, θα τη βρεις στην αρχική οθόνη ή στις εφαρμογές σου.</p>`}`);
 }
 // ---- search: accents, case and final sigma don't matter («γατα» finds «Γάτα») ----
 let searchQuery = '';
