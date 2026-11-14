@@ -19,6 +19,7 @@ public/            everything that gets deployed
   manifest.webmanifest, icons/
 scripts/gen-audio.js      generates missing mp3s (Zyphra by default, or OpenAI)
 scripts/trim-silence.py   shortens long pauses in generated clips
+scripts/check-audio.py    flags clips with dropped words, silent gaps or murmured pauses
 ```
 
 ## Deploy on Cloudflare Pages
@@ -44,6 +45,7 @@ Workers & Pages → Create → Pages → Connect to Git → pick this repo:
    ```bash
    mkdir -p /tmp/raw && cp public/audio/panta-*.mp3 /tmp/raw/
    python3 scripts/trim-silence.py public/audio /tmp/raw/*.mp3
+   python3 scripts/check-audio.py public      # flags dropped words, gaps, murmured pauses
    ```
 3. Refresh the offline file list so phones pick up the change:
    ```bash
