@@ -115,6 +115,12 @@ p{margin:0}
 .ask textarea:focus-visible,.ask input:focus-visible{outline:3px solid var(--lemon);outline-offset:1px}
 .ask .btn{align-self:flex-start}
 .ask .note a,.note a{color:var(--sea)}
+.search{position:relative}
+.search input{font:inherit;font-size:18px;width:100%;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:12px 18px 12px 48px;-webkit-appearance:none;appearance:none}
+.search input::placeholder{color:var(--muted)}
+.search input:focus-visible{outline:3px solid var(--lemon);outline-offset:2px;border-color:var(--sea)}
+.search .find-icon{position:absolute;left:16px;top:50%;width:22px;height:22px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0}
 footer.site{padding-top:0}
 footer.site nav{display:flex;flex-wrap:wrap;gap:8px 18px;border-top:2px solid var(--line);padding-top:16px;font-size:15px}
@@ -147,6 +153,7 @@ const I = {
   next:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   sound:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+  find:'<svg viewBox="0 0 24 24" aria-hidden="true" class="find-icon"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
   cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
 };
 
@@ -193,6 +200,12 @@ function renderHome(){
     </div>
     <div class="meander" aria-hidden="true"></div>
     <span class="stars">${STAR}<span>${totalStars()} από ${LESSONS.length} αστέρια</span></span>
+    <div class="search" role="search">
+      <label for="find" class="sr">Ψάξε ζωγραφιά</label>
+      ${I.find}
+      <input id="find" type="search" placeholder="Ψάξε… π.χ. γάτα, θάλασσα, κολοκύθα" autocomplete="off" enterkeyhint="search" maxlength="60">
+    </div>
+    <p class="note" id="find-none" hidden></p>
     <div class="grid">
       ${LESSONS.map(l=>`
         <button class="card" data-id="${l.id}" aria-label="${l.title}">
@@ -219,16 +232,46 @@ function renderHome(){
     </section>`;
   app.querySelectorAll('.card').forEach(b=>b.onclick=()=>{ location.hash = b.dataset.id; });
   wireAsk();
+  wireSearch();
 }
-function openAsk(){
+// ---- search: accents, case and final sigma don't matter («γατα» finds «Γάτα») ----
+let searchQuery = '';
+const fold = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ς/g,'σ');
+const searchText = {};
+// Each search word must match the start of a word: «κολοκ» finds «κολοκύθα», «ζω» doesn't match every «ζωγράφισε».
+LESSONS.forEach(l => { searchText[l.id] = ' ' + fold([l.title, l.how, l.intro, ...l.steps.map(s=>s.say)].join(' ')).replace(/[^\p{L}\p{N}]+/gu,' ') + ' '; });
+function wireSearch(){
+  const input = document.getElementById('find'), none = document.getElementById('find-none');
+  const apply = ()=>{
+    searchQuery = input.value;
+    const words = fold(searchQuery).split(/\s+/).filter(Boolean);
+    let shown = 0;
+    app.querySelectorAll('.grid .card').forEach(c=>{
+      const hit = words.every(w => searchText[c.dataset.id].includes(' ' + w));
+      c.hidden = !hit; if (hit) shown++;
+    });
+    if (words.length && !shown){
+      none.hidden = false;
+      none.innerHTML = 'Δεν βρήκα ζωγραφιά για «<b></b>». <a href="#zita" id="find-ask">Ζήτα τη ως καινούργιο μάθημα!</a>';
+      none.querySelector('b').textContent = searchQuery.trim();
+      none.querySelector('#find-ask').onclick = ev => { ev.preventDefault(); openAsk(searchQuery.trim()); };
+    } else none.hidden = true;
+  };
+  input.value = searchQuery;
+  input.addEventListener('input', apply);
+  input.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ ev.preventDefault(); input.blur(); } });
+  if (searchQuery) apply();
+}
+function openAsk(prefill){
   const f = document.getElementById('ask-form'); if (!f) return;
   f.hidden = false; document.getElementById('ask-open').hidden = true;
+  if (typeof prefill === 'string' && prefill) document.getElementById('ask-what').value = prefill;
   document.getElementById('zita-box').scrollIntoView({behavior:'smooth', block:'start'});
   setTimeout(()=>{ try{ document.getElementById('ask-what').focus({preventScroll:true}); }catch(e){} }, 400);
 }
 function wireAsk(){
   const form = document.getElementById('ask-form'), status = document.getElementById('ask-status'), send = document.getElementById('ask-send');
-  document.getElementById('ask-open').onclick = openAsk;
+  document.getElementById('ask-open').onclick = ()=>openAsk();
   form.onsubmit = async (ev)=>{
     ev.preventDefault();
     const what = document.getElementById('ask-what').value.trim();
