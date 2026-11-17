@@ -8,5 +8,5 @@ module.exports = {
   description: "Δωρεάν μαθήματα ζωγραφικής για παιδιά, βήμα βήμα, με φωνητικές οδηγίες στα ελληνικά. Χταπόδι, καΐκι, κουκουβάγια, αμφορέας και άλλα θέματα από τη Μεσόγειο.",
   ages: "6–10",
   // Last content update: shown on the terms and privacy pages and used in sitemap.xml.
-  updated: "2026-11-14"
+  updated: "2026-11-17"
 };
